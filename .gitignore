@@ -1,0 +1,9 @@
+__pycache__/
+*.рус
+*.pyo
+*.pyd
+env/
+venv/
+.env/
+DS_Store
+Thumbs.db
