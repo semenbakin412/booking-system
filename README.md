@@ -1,64 +1,84 @@
-# Система бронирования (ресторан)
+# Система бронирования столиков ресторана
 
-Мини-приложение: PostgreSQL, Python, графический интерфейс на tkinter.
+Приложение для управления бронированиями столиков в ресторане с PostgreSQL базой данных и графическим интерфейсом.
 
-## Требования
+## Возможности
 
-- Python 3.10+ (рекомендуется 3.11+)
-- Установленный и запущенный **PostgreSQL**
+- **Управление пользователями** — создание, просмотр, редактирование, удаление пользователей с ролями (клиент, администратор, менеджер)
+- **Управление столами** — добавление столов с указанием номера, вместимости и зоны (зал, терраса, VIP)
+- **Бронирования** — создание броней с проверкой доступности стола по времени
+- **Валидация** — автоматическая проверка пересекающихся броней для избежания конфликтов
+
+## Технологии
+
+- Python 3.10+
+- PostgreSQL
+- psycopg2-binary
+- python-dotenv
+- tkinter (встроен в Python)
 
 ## Установка
 
-Из корня проекта (Windows PowerShell):
+1. Клонируйте репозиторий
+2. Установите зависимости:
 
-```powershell
-cd "C:\путь\к\BOOKING"
-python -m venv venv
-.\venv\Scripts\python.exe -m pip install -r requirements.txt
+```bash
+pip install -r requirements.txt
 ```
 
-Короткий вариант (если в корне есть файл-обёртка `requirements`):
+3. Настройте подключение к базе данных в `.env`:
 
-```powershell
-.\venv\Scripts\python.exe -m pip install -r requirements
+```
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=restaurant_booking
+POSTGRES_USER=your_user
+POSTGRES_PASSWORD=your_password
 ```
 
-## Настройка БД
+## Запуск
 
-Скопируйте пример окружения и отредактируйте под свой сервер:
+### GUI-приложение
 
-```powershell
-copy .env.example .env
+```bash
+python gui.py
 ```
 
-В `.env` должны быть переменные: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` (см. `postgres_driver.py`).
+### Backend (только API/логика)
 
-Создайте пустую базу с именем из `DB_NAME` в PostgreSQL (например через pgAdmin или `createdb`).
-
-## Запуск графического интерфейса
-
-Из корня проекта, с активированным venv или полным путём к Python:
-
-```powershell
-.\venv\Scripts\python.exe gui.py
+```bash
+python -c "import backend; backend.create_tables()"
 ```
 
-При первом запуске откройте вкладку **«Схема БД»** и нажмите **«Создать / обновить таблицы»**.
+## Структура проекта
 
-## Прочие команды
-
-Создать только таблицы из кода (без GUI):
-
-```powershell
-.\venv\Scripts\python.exe backend.py
+```
+├── backend.py          # Логика работы с БД (CRUD)
+├── gui.py              # Графический интерфейс (tkinter)
+├── main.py             # Точка входа с функциями backend
+├── postgres_driver.py  # Драйвер для работы с PostgreSQL
+├── models/             # Модели данных
+│   ├── user.py
+│   ├── tables.py
+│   └── booking.py
+└── requirements.txt    # Зависимости
 ```
 
-Проверка синтаксиса модулей:
+## Модели данных
 
-```powershell
-.\venv\Scripts\python.exe -m py_compile gui.py backend.py postgres_driver.py
-```
+### Users (Пользователи)
+- email, password_hash, full_name, phone
+- role: CLIENT / ADMIN / MANAGER
+- is_active, created_at, updated_at
 
-## Проверка доступности стола при бронировании
+### RestaurantTables (Столы)
+- label (номер/название), capacity (вместимость)
+- zone: HALL / TERRACE / VIP
+- is_active, notes, created_at, updated_at
 
-На вкладке **«Бронирования»** в подвкладках **«Создать»** и **«Изменить»** есть кнопка **«Проверить доступность стола»**. Она использует поля **ID стола**, **Начало** и **Конец** и проверяет отсутствие пересечений с другими бронями (брони со статусом `cancelled` не блокируют слот). При изменении брони текущая запись исключается из проверки по её **ID брони**.
+### Bookings (Бронирования)
+- user_id, restaurant_table_id
+- start_at, end_at (время брони)
+- party_size (количество гостей)
+- status: PENDING / CONFIRMED / CANCELLED / COMPLETED
+- notes, created_at, updated_at
